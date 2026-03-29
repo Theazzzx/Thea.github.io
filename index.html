@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GravityKH PRO Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Poppins;}
+body{background:linear-gradient(135deg,#020617,#0f172a);color:white;overflow-x:hidden;}
+#particles-js{position:fixed;width:100%;height:100%;z-index:-1;}
+header{display:flex;justify-content:space-between;padding:15px 20px;background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);}
+.logo{color:#38bdf8;font-weight:bold;text-shadow:0 0 10px #38bdf8,0 0 20px #0ea5e9;}
+nav button{margin-left:8px;padding:6px 12px;border:none;border-radius:8px;background:#1e293b;color:white;cursor:pointer;transition:0.3s;}
+nav button:hover{transform:scale(1.1);box-shadow:0 0 10px #38bdf8;}
+.section{display:none;padding:20px;opacity:0;transform:translateY(20px);transition:0.4s;}
+.section.active{display:block;opacity:1;transform:translateY(0);}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;}
+.card{background:rgba(255,255,255,0.05);padding:15px;border-radius:12px;transition:0.3s;}
+.card:hover{transform:scale(1.05);box-shadow:0 0 20px #38bdf8;}
+.btn{background:linear-gradient(135deg,#38bdf8,#0ea5e9);padding:10px 18px;border:none;border-radius:10px;cursor:pointer;color:black;font-weight:bold;position:relative;overflow:hidden;transition:0.3s;}
+.btn:hover{transform:scale(1.1);box-shadow:0 0 20px #38bdf8;}
+input{width:90%;padding:10px;margin:5px;border:none;border-radius:8px;}
+.balance{margin-top:10px;color:#38bdf8;}
+table{width:100%;border-collapse:collapse;}
+th,td{border:1px solid white;padding:8px;text-align:center;}
+</style>
+</head>
+<body>
+
+<div id="particles-js"></div>
+
+<header>
+<div class="logo" id="logo">GravityKH</div>
+<nav>
+<button onclick="show('home')">Home</button>
+<button onclick="show('login')">Login</button>
+<button onclick="show('register')">Register</button>
+<button onclick="show('deposit')">Deposit</button>
+<button onclick="showOrders()">Orders</button>
+<button onclick="showMyAccounts()">My Accounts</button>
+<button onclick="showUsers()">Users</button>
+<button onclick="logout()">Logout</button>
+</nav>
+</header>
+
+<!-- HOME -->
+<div id="home" class="section active">
+<h2>🔥 Roblox Account Shop</h2>
+<div class="products">
+<div class="card"><h3>VIP Account</h3><p>$10</p><button class="btn" onclick="buyNow('VIP',0)">Buy Now</button></div>
+<div class="card"><h3>Starter Account</h3><p>$5</p><button class="btn" onclick="buyNow('Starter',0)">Buy Now</button></div>
+</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="section">
+<h2>Login</h2>
+<input id="luser" placeholder="Username"><br>
+<input id="lpass" type="password" placeholder="Password"><br>
+<button class="btn" onclick="login()">Login</button>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="section">
+<h2>Register</h2>
+<input id="ruser" placeholder="Username"><br>
+<input id="rpass" type="password" placeholder="Password"><br>
+<input id="rconfirm" type="password" placeholder="Confirm Password"><br>
+<button class="btn" onclick="register()">Register</button>
+</div>
+
+<!-- DEPOSIT -->
+<div id="deposit" class="section">
+<h2>Deposit</h2>
+<p class="balance">Balance: $<span id="balanceText">0</span></p>
+<input id="amount" placeholder="Amount"><br>
+<button class="btn" onclick="deposit()">Deposit</button><br><br>
+<img src="aba-qr.png" width="200">
+</div>
+
+<!-- ORDERS -->
+<div id="orders" class="section">
+<h2>Order History</h2>
+<table>
+<tr><th>User</th><th>Item</th><th>Account</th><th>Price</th><th>Date</th><th>Action</th></tr>
+<tbody id="orderTable"></tbody>
+</table>
+</div>
+
+<!-- MY ACCOUNTS (user view account) -->
+<div id="myaccounts" class="section">
+<h2>🎮 My Accounts</h2>
+<table>
+<tr><th>Item</th><th>Account</th><th>Price</th><th>Date</th><th>Action</th></tr>
+<tbody id="myAccTable"></tbody>
+</table>
+</div>
+
+<!-- USERS (admin) -->
+<div id="users" class="section">
+<h2>👤 Users</h2>
+<table>
+<tr><th>Username</th><th>Balance</th><th>Last Login</th><th>Total Orders</th></tr>
+<tbody id="userTable"></tbody>
+</table>
+</div>
+
+<script>
+// PARTICLES
+particlesJS("particles-js",{particles:{number:{value:60},size:{value:3},move:{speed:2}}});
+
+// NAV
+function show(id){document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");}
+
+// HASH
+async function hash(t){let d=new TextEncoder().encode(t);let h=await crypto.subtle.digest("SHA-256",d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+
+// REGISTER
+async function register(){
+if(rpass.value!==rconfirm.value){alert("Password not match");return;}
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let h=await hash(rpass.value);
+users.push({username:ruser.value,password:h,balance:0,lastLogin:"-",orders:0});
+localStorage.setItem("users",JSON.stringify(users));
+alert("Registered");show('login');
+}
+
+// LOGIN
+async function login(){
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let h=await hash(lpass.value);
+let f=users.find(x=>x.username==luser.value&&x.password==h);
+if(f){
+localStorage.setItem("currentUser",f.username);
+f.lastLogin=new Date().toLocaleString();
+localStorage.setItem("users",JSON.stringify(users));
+logo.innerText="GravityKH | "+f.username;
+updateBalance();show('home');
+}else alert("Wrong login");
+}
+
+// LOGOUT
+function logout(){localStorage.clear();location.reload();}
+
+// BALANCE
+function updateBalance(){
+let u=localStorage.getItem("currentUser");
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let me=users.find(x=>x.username==u);
+if(me) balanceText.innerText=me.balance||0;
+}
+
+// DEPOSIT
+function deposit(){
+let amt=parseFloat(amount.value);
+let u=localStorage.getItem("currentUser");
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let me=users.find(x=>x.username==u);
+me.balance+=amt;
+localStorage.setItem("users",JSON.stringify(users));
+updateBalance();
+alert("Deposit success");
+}
+
+// STOCK
+if(!localStorage.getItem("accounts")){
+localStorage.setItem("accounts",JSON.stringify([
+{username:"grt1221",password:"12weq3q3"}
+]));
+}
+
+// BUY NOW
+function buyNow(item,price){
+let u=localStorage.getItem("currentUser");
+if(!u){alert("Login first");return;}
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let me=users.find(x=>x.username==u);
+if(me.balance<price){alert("Not enough balance");return;}
+let accs=JSON.parse(localStorage.getItem("accounts"))||[];
+if(accs.length==0){alert("Out of stock");return;}
+let acc=accs.shift();
+localStorage.setItem("accounts",JSON.stringify(accs));
+me.balance-=price;me.orders=(me.orders||0)+1;
+localStorage.setItem("users",JSON.stringify(users));
+updateBalance();
+let orders=JSON.parse(localStorage.getItem("orders"))||[];
+orders.push({user:u,item:item,acc:acc.username+"/"+acc.password,price:price,date:new Date().toLocaleString()});
+localStorage.setItem("orders",JSON.stringify(orders));
+alert("🎉 "+acc.username+" | "+acc.password);
+}
+
+// SHOW ORDERS
+function showOrders(){
+show('orders');
+let orders=JSON.parse(localStorage.getItem("orders"))||[];
+let tb=document.getElementById("orderTable");
+tb.innerHTML="";
+orders.forEach(o=>{
+let tr=document.createElement("tr");
+tr.innerHTML=`
+<td>${o.user}</td>
+<td>${o.item}</td>
+<td>****</td>
+<td>$${o.price}</td>
+<td>${o.date}</td>
+<td><button class="btn" onclick="alert('Account: ${o.acc}')">View Account</button></td>
+`;
+tb.appendChild(tr);
+});
+}
+
+// SHOW MY ACCOUNTS (user)
+function showMyAccounts(){
+show('myaccounts');
+let u=localStorage.getItem("currentUser");
+if(!u){alert("Login first"); return;}
+let orders=JSON.parse(localStorage.getItem("orders"))||[];
+let userOrders=orders.filter(o=>o.user===u);
+let tb=document.getElementById("myAccTable");
+tb.innerHTML="";
+userOrders.forEach(o=>{
+let tr=document.createElement("tr");
+tr.innerHTML=`
+<td>${o.item}</td>
+<td>${o.acc}</td>
+<td>$${o.price}</td>
+<td>${o.date}</td>
+<td><button class="btn" onclick="copyAcc('${o.acc}')">Copy</button></td>
+`;
+tb.appendChild(tr);
+});
+}
+
+// COPY ACCOUNT
+function copyAcc(acc){
+navigator.clipboard.writeText(acc);
+alert("Copied: "+acc);
+}
+
+// SHOW USERS (admin)
+function showUsers(){
+show('users');
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let tb=document.getElementById("userTable");
+tb.innerHTML="";
+users.forEach(u=>{
+let tr=document.createElement("tr");
+tr.innerHTML=`<td>${u.username}</td><td>$${u.balance}</td><td>${u.lastLogin}</td><td>${u.orders||0}</td>`;
+tb.appendChild(tr);
+});
+}
+
+// AUTO USER
+let u=localStorage.getItem("currentUser");
+if(u){logo.innerText="GravityKH | "+u;updateBalance();}
+</script>
+
+</body>
+</html>
